@@ -5,6 +5,17 @@
   "version": "0.0.1",
   "publisher": "IoNiCx1",
 
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/IoNiCx1/runx"
+  },
+
+  "homepage": "https://github.com/IoNiCx1/runx",
+
+  "bugs": {
+    "url": "https://github.com/IoNiCx1/runx/issues"
+  },
+
   "engines": {
     "vscode": "^1.80.0"
   },
@@ -23,11 +34,11 @@
   "files": [
     "extension.js",
     "bin/**",
-    "language-configuration.json"
+    "language-configuration.json",
+    "README.md"
   ],
 
   "contributes": {
-
     "languages": [
       {
         "id": "nexa",

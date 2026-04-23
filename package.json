@@ -1,27 +1,37 @@
 {
   "name": "runx",
-  "displayName": "RunX",
-  "description": "Nexa language support and runner",
-  "version": "0.0.1",
+  "displayName": "RunX — Nexa Runner",
+  "description": "Run, highlight, and develop Nexa (.nx) programs directly in VS Code",
+  "version": "0.2.0",
   "publisher": "IoNiCx1",
 
   "repository": {
     "type": "git",
     "url": "https://github.com/IoNiCx1/runx"
   },
-
   "homepage": "https://github.com/IoNiCx1/runx",
-
   "bugs": {
     "url": "https://github.com/IoNiCx1/runx/issues"
   },
+
+  "icon": "icon.png",
 
   "engines": {
     "vscode": "^1.80.0"
   },
 
   "categories": [
-    "Programming Languages"
+    "Programming Languages",
+    "Other"
+  ],
+
+  "keywords": [
+    "nexa",
+    "nx",
+    "compiler",
+    "runner",
+    "ml",
+    "machine learning"
   ],
 
   "activationEvents": [
@@ -35,23 +45,53 @@
     "extension.js",
     "bin/**",
     "language-configuration.json",
-    "README.md"
+    "syntaxes/**",
+    "snippets/**",
+    "README.md",
+    "icon.png"
   ],
 
   "contributes": {
+
     "languages": [
       {
         "id": "nexa",
-        "aliases": ["Nexa", "nexa"],
+        "aliases": ["Nexa", "nexa", "nx"],
         "extensions": [".nx"],
         "configuration": "./language-configuration.json"
+      }
+    ],
+
+    "grammars": [
+      {
+        "language": "nexa",
+        "scopeName": "source.nexa",
+        "path": "./syntaxes/nexa.tmLanguage.json"
+      }
+    ],
+
+    "snippets": [
+      {
+        "language": "nexa",
+        "path": "./snippets/nexa.json"
       }
     ],
 
     "commands": [
       {
         "command": "runx.runFile",
-        "title": "Run Nexa File"
+        "title": "Run Nexa File",
+        "category": "RunX",
+        "icon": "$(play)"
+      }
+    ],
+
+    "keybindings": [
+      {
+        "command": "runx.runFile",
+        "key": "ctrl+shift+n",
+        "mac": "cmd+shift+n",
+        "when": "editorLangId == nexa"
       }
     ],
 
@@ -60,15 +100,51 @@
         {
           "command": "runx.runFile",
           "when": "editorLangId == nexa",
-          "group": "navigation"
+          "group": "navigation@1"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "runx.runFile",
+          "when": "editorLangId == nexa",
+          "group": "1_modification"
         }
       ]
+    },
+
+    "configuration": {
+      "title": "RunX",
+      "properties": {
+        "runx.compilerPath": {
+          "type": "string",
+          "default": "",
+          "description": "Override the path to the Nexa compiler binary. Leave empty to use the bundled binary."
+        },
+        "runx.saveBeforeRun": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically save the file before running."
+        },
+        "runx.reuseTerminal": {
+          "type": "boolean",
+          "default": false,
+          "description": "Reuse an existing RunX terminal instead of creating a new one each time."
+        }
+      }
     }
+
   },
 
-  "scripts": {},
+  "scripts": {
+    "lint": "eslint .",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
 
-  "devDependencies": {},
+  "devDependencies": {
+    "@vscode/vsce": "^2.24.0",
+    "eslint": "^8.57.0"
+  },
 
   "dependencies": {}
 }

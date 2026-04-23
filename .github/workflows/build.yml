@@ -1,0 +1,218 @@
+name: Build & Package RunX
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:   # allow manual trigger from GitHub UI
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Job 1: Build nexa on each native platform
+# ─────────────────────────────────────────────────────────────────────────────
+
+jobs:
+
+  build-linux:
+    name: Build — Linux
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: IoNiCx1/nexa   # your compiler repo
+          path: nexa
+
+      - name: Install LLVM 18
+        run: |
+          wget -qO- https://apt.llvm.org/llvm.sh | sudo bash -s -- 18
+          sudo apt-get install -y llvm-18 llvm-18-dev clang-18 cmake ninja-build
+
+      - name: Configure
+        working-directory: nexa
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DLLVM_DIR=/usr/lib/llvm-18/cmake \
+            -G Ninja
+
+      - name: Build
+        working-directory: nexa
+        run: cmake --build build --config Release
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-binaries
+          path: |
+            nexa/build/nexa
+            nexa/build/nexa_runtime.a
+
+  build-windows:
+    name: Build — Windows
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: IoNiCx1/nexa
+          path: nexa
+
+      - name: Install LLVM 18
+        run: |
+          choco install llvm --version=18.1.8 -y
+          echo "C:\Program Files\LLVM\bin" >> $env:GITHUB_PATH
+
+      - name: Configure
+        working-directory: nexa
+        shell: cmd
+        run: |
+          cmake -B build ^
+            -DCMAKE_BUILD_TYPE=Release ^
+            -DLLVM_DIR="C:\Program Files\LLVM\lib\cmake\llvm" ^
+            -G "Visual Studio 17 2022" -A x64
+
+      - name: Build
+        working-directory: nexa
+        run: cmake --build build --config Release
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-binaries
+          path: |
+            nexa/build/Release/nexa.exe
+            nexa/build/Release/nexa_runtime.a
+
+  build-mac:
+    name: Build — macOS
+    runs-on: macos-14        # Apple Silicon runner
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: IoNiCx1/nexa
+          path: nexa
+
+      - name: Install LLVM 18
+        run: |
+          brew install llvm@18 cmake ninja
+          echo "$(brew --prefix llvm@18)/bin" >> $GITHUB_PATH
+
+      - name: Configure
+        working-directory: nexa
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DLLVM_DIR=$(brew --prefix llvm@18)/lib/cmake/llvm \
+            -G Ninja
+
+      - name: Build
+        working-directory: nexa
+        run: cmake --build build --config Release
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mac-binaries
+          path: |
+            nexa/build/nexa
+            nexa/build/nexa_runtime.a
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Job 2: Assemble extension and package .vsix
+# Runs after all 3 builds succeed
+# ─────────────────────────────────────────────────────────────────────────────
+
+  package:
+    name: Package Extension
+    runs-on: ubuntu-22.04
+    needs: [ build-linux, build-windows, build-mac ]
+
+    steps:
+      - uses: actions/checkout@v4      # checks out the runx repo
+
+      - name: Download Linux binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-binaries
+          path: bin/linux/
+
+      - name: Download Windows binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-binaries
+          path: bin/windows/
+
+      - name: Download macOS binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: mac-binaries
+          path: bin/mac/
+
+      - name: Fix permissions on Unix binaries
+        run: |
+          chmod +x bin/linux/nexa
+          chmod +x bin/mac/nexa
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install vsce
+        run: npm install -g @vscode/vsce
+
+      - name: Package extension
+        run: vsce package --allow-missing-repository
+
+      - name: Upload .vsix
+        uses: actions/upload-artifact@v4
+        with:
+          name: runx-vsix
+          path: "*.vsix"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Job 3: Publish to VS Code Marketplace (only on push to main, not PRs)
+# Requires VSCE_PAT secret set in repo Settings → Secrets
+# ─────────────────────────────────────────────────────────────────────────────
+
+  publish:
+    name: Publish to Marketplace
+    runs-on: ubuntu-22.04
+    needs: [ package ]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Linux binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-binaries
+          path: bin/linux/
+
+      - name: Download Windows binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-binaries
+          path: bin/windows/
+
+      - name: Download macOS binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: mac-binaries
+          path: bin/mac/
+
+      - name: Fix permissions
+        run: |
+          chmod +x bin/linux/nexa
+          chmod +x bin/mac/nexa
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install vsce
+        run: npm install -g @vscode/vsce
+
+      - name: Publish
+        run: vsce publish --pat ${{ secrets.VSCE_PAT }}

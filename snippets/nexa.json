@@ -1,0 +1,140 @@
+{
+  "Variable Declaration (int)": {
+    "prefix": "int",
+    "body": ["int ${1:name} = ${2:0};"],
+    "description": "Declare an integer variable"
+  },
+  "Variable Declaration (double)": {
+    "prefix": "dbl",
+    "body": ["double ${1:name} = ${2:0.0};"],
+    "description": "Declare a double variable"
+  },
+  "Variable Declaration (string)": {
+    "prefix": "str",
+    "body": ["string ${1:name} = \"${2:value}\";"],
+    "description": "Declare a string variable"
+  },
+  "Variable Declaration (bool)": {
+    "prefix": "bool",
+    "body": ["bool ${1:name} = ${2:true};"],
+    "description": "Declare a bool variable"
+  },
+  "Variable Declaration (tensor)": {
+    "prefix": "tensor",
+    "body": ["tensor ${1:name} = ${2:zeros(2, 2)};"],
+    "description": "Declare a tensor variable"
+  },
+  "Print Statement": {
+    "prefix": "print",
+    "body": ["print(${1:value});"],
+    "description": "Print a value"
+  },
+  "Loop": {
+    "prefix": "loop",
+    "body": [
+      "loop(${1:i}, ${2:count}) {",
+      "\t${3:// body}",
+      "}"
+    ],
+    "description": "Loop statement"
+  },
+  "If Statement": {
+    "prefix": "if",
+    "body": [
+      "if (${1:condition}) {",
+      "\t${2:// then}",
+      "} else {",
+      "\t${3:// else}",
+      "}"
+    ],
+    "description": "If/else statement"
+  },
+  "Function Declaration": {
+    "prefix": "fn",
+    "body": [
+      "fn ${1:name}(${2:int param}) -> ${3:int} {",
+      "\t${4:// body}",
+      "\treturn ${5:0};",
+      "}"
+    ],
+    "description": "Function declaration"
+  },
+  "Import File Module": {
+    "prefix": "imp",
+    "body": ["imp open.file();"],
+    "description": "Import the file module"
+  },
+  "Read CSV": {
+    "prefix": "readcsv",
+    "body": [
+      "imp open.file();",
+      "tensor ${1:data} = read_csv(\"${2:file.csv}\", ${3:0});"
+    ],
+    "description": "Read a CSV file into a tensor"
+  },
+  "Logistic Regression Model": {
+    "prefix": "lore",
+    "body": [
+      "tensor ${1:model} = LoRe(${2:100}, ${3:0.01});",
+      "fit(${1:model}, ${4:X_train}, ${5:y_train});",
+      "tensor ${6:pred} = predict(${1:model}, ${7:X_test});",
+      "double ${8:acc} = accuracy(${6:pred}, ${9:y_test});",
+      "print(${8:acc});"
+    ],
+    "description": "Logistic regression model template"
+  },
+  "ML Pipeline": {
+    "prefix": "mlpipe",
+    "body": [
+      "imp open.file();",
+      "",
+      "// Load data",
+      "tensor raw = read_csv(\"${1:data.csv}\", ${2:1});",
+      "",
+      "// Split features and labels",
+      "tensor X = csv_slice(raw, 0, ${3:2});",
+      "tensor y = csv_col(raw, ${4:2});",
+      "",
+      "// Normalize",
+      "tensor X_norm = normalize(X);",
+      "",
+      "// Train/test split",
+      "tensor X_train = train_split(X_norm, 0.8);",
+      "tensor X_test  = test_split(X_norm,  0.8);",
+      "tensor y_train = train_split(y, 0.8);",
+      "tensor y_test  = test_split(y, 0.8);",
+      "",
+      "// Train",
+      "tensor model = LoRe(${5:100}, ${6:0.01});",
+      "fit(model, X_train, y_train);",
+      "",
+      "// Evaluate",
+      "tensor pred = predict(model, X_test);",
+      "double acc  = accuracy(pred, y_test);",
+      "print(acc);"
+    ],
+    "description": "Full ML pipeline template"
+  },
+  "Struct Declaration": {
+    "prefix": "struct",
+    "body": [
+      "struct ${1:Name} {",
+      "\t${2:int} ${3:field};",
+      "\tconstructor(${2:int} ${3:field}) {",
+      "\t\tself.${3:field} = ${3:field};",
+      "\t}",
+      "}"
+    ],
+    "description": "Struct with constructor"
+  },
+  "Write File": {
+    "prefix": "writefile",
+    "body": ["open.file(\"${1:output.txt}\", write, \"${2:content}\\n\");"],
+    "description": "Write to a file"
+  },
+  "Append File": {
+    "prefix": "appendfile",
+    "body": ["open.file(\"${1:output.txt}\", append, \"${2:content}\\n\");"],
+    "description": "Append to a file"
+  }
+}
